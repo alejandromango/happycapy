@@ -20,6 +20,10 @@ var config = {
 var player;
 var platforms;
 var cursors;
+var isClicking = false;
+var touchRight = false;
+var touchLeft = false;
+var touchJump = false;
 var score = 0;
 var gameOver = false;
 var scoreText;
@@ -111,6 +115,10 @@ function create() {
 
   //  Input Events
   cursors = this.input.keyboard.createCursorKeys();
+  this.input.addPointer(1);
+
+  this.input.on('pointerdown', handleTouchDown);
+  this.input.on('pointerup', handleTouchUp);
 
   this.physics.add.collider(player, platforms);
   this.physics.add.collider(player, grav_yuzu, antigrav, null, this);
@@ -122,19 +130,18 @@ function update() {
     return;
   }
 
-  if (cursors.left.isDown) {
+  if (cursors.left.isDown || touchLeft) {
     player.setVelocityX(-160);
 
     player.anims.play('left', true);
     right = false;
   }
-  else if (cursors.right.isDown) {
+  else if (cursors.right.isDown || touchRight) {
     player.setVelocityX(160);
 
     player.anims.play('right', true);
     right = true;
-  }
-  else {
+  } else {
     player.setVelocityX(0);
     if (right){
         player.anims.play('right_static');
@@ -142,15 +149,40 @@ function update() {
         player.anims.play('left_static');
     }
   }
-
-  if (cursors.up.isDown && player.body.touching.down && !flipped_gravity) {
+  if ((cursors.up.isDown || touchJump) && player.body.touching.down && !flipped_gravity) {
         player.setVelocityY(-330);
 
   }
-  if (cursors.up.isDown && player.body.touching.up && flipped_gravity) {
+  if ((cursors.up.isDown || touchJump) && player.body.touching.up && flipped_gravity) {
         player.setVelocityY(330);
 
   }
+}
+
+function handleTouchDown(pointer){
+    if (pointer.position.x > (config.width * 3 / 4) &&
+        pointer.position.y > (config.height * 1 / 2)){
+        touchRight = true;
+    }
+    if (pointer.position.x < (config.width * 1 / 4) &&
+        pointer.position.y > (config.height * 1 / 2)){
+        touchLeft = true;
+    }
+    if (pointer.position.y < (config.height * 1 / 2)){
+        touchJump = true;
+    }
+}
+
+function handleTouchUp(pointer){
+    if (pointer.downX > (config.width * 3 / 4)){
+        touchRight = false;
+    }
+    if (pointer.downX < (config.width * 1 / 4)){
+        touchLeft = false;
+    }
+    if (pointer.downY < (config.height * 1 / 2)){
+        touchJump = false;
+    }
 }
 
 function antigrav(player, yuzu) {
